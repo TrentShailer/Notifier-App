@@ -1,5 +1,5 @@
 import "react-native-gesture-handler";
-import React, { Component } from "react";
+import React, { Component, useRef } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import Palette from "./Utilities/Palette";
 import FirstLaunch1 from "./Views/FirstLaunch1";
@@ -7,10 +7,21 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import FirstLaunch2 from "./Views/FirstLaunch2";
 import NoInternetModal from "./Views/NoInternetModal";
-import { View } from "react-native";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const MainStack = createStackNavigator();
 const RootStack = createStackNavigator();
+
+Notifications.setNotificationHandler({
+	handleNotification: async () => ({
+		shouldShowAlert: true,
+		shouldPlaySound: false,
+		shouldSetBadge: false,
+	}),
+});
 
 class MainStackScreen extends Component {
 	constructor(props) {
@@ -18,16 +29,72 @@ class MainStackScreen extends Component {
 
 		this.state = {
 			NetInfoListener: () => {},
+			apiID: "",
 		};
 	}
-	componentDidMount() {
-		const netInfoListener = NetInfo.addEventListener((networkState) => {
-			if (!networkState.isConnected) {
-				this.props.navigation.navigate("NoInternet");
-			} else {
-				this.props.navigation.navigate("Main");
+	registerForPushNotificationsAsync = async () => {
+		if (Constants.isDevice) {
+			const { status: existingStatus } =
+				await Notifications.getPermissionsAsync();
+			let finalStatus = existingStatus;
+			if (existingStatus !== "granted") {
+				const { status } =
+					await Notifications.requestPermissionsAsync();
+				finalStatus = status;
 			}
-		});
+			if (finalStatus !== "granted") {
+				alert("Failed to get push token for push notification!");
+				return;
+			}
+			const token = (await Notifications.getExpoPushTokenAsync()).data;
+			axios
+				.post("http://192.168.9.101:3005/user/create", {
+					pushToken: token,
+				})
+				.then(async (res) => {
+					this.setState({ apiID: res.data.apiID });
+					try {
+						await AsyncStorage.setItem("apiID", res.data.apiID);
+					} catch (err) {
+						console.log(err);
+					}
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		} else {
+			alert("Must use physical device for Push Notifications");
+		}
+
+		if (Platform.OS === "android") {
+			Notifications.setNotificationChannelAsync("default", {
+				name: "default",
+				importance: Notifications.AndroidImportance.MAX,
+				vibrationPattern: [0, 250, 250, 250],
+				lightColor: "#FF231F7C",
+			});
+		}
+	};
+
+	componentDidMount() {
+		const netInfoListener = NetInfo.addEventListener(
+			async (networkState) => {
+				if (!networkState.isConnected) {
+					this.props.navigation.navigate("NoInternet");
+				} else {
+					this.props.navigation.navigate("Main");
+					try {
+						var apiID = await AsyncStorage.getItem("apiID");
+						if (apiID === null) {
+							return this.registerForPushNotificationsAsync();
+						}
+						this.setState({ apiID: apiID });
+					} catch (err) {
+						console.log(err);
+					}
+				}
+			}
+		);
 
 		this.setState({ NetInfoListener: netInfoListener });
 	}

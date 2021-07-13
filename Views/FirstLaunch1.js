@@ -5,15 +5,16 @@ import CustomButton from "../Utilities/CustomButton";
 
 import Svg, { Path } from "react-native-svg";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 export default class FirstLaunch1 extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			id: "",
+			apiID: "",
 			rotateZ: new Animated.Value(0),
 		};
 	}
-	test = () => {
+	spinner = () => {
 		Animated.loop(
 			Animated.timing(this.state.rotateZ, {
 				toValue: 1,
@@ -24,14 +25,16 @@ export default class FirstLaunch1 extends Component {
 		).start();
 	};
 
-	componentDidMount() {
-		this.test();
-		axios
-			.post("http://notification.trentshailer.com/NewID")
-			.catch((err) => {
-				console.log(err);
-			})
-			.then((data) => {});
+	async componentDidMount() {
+		this.spinner();
+
+		var waitForApiID = setInterval(async () => {
+			var apiID = await AsyncStorage.getItem("apiID");
+			if (apiID !== null) {
+				this.setState({ apiID: apiID });
+				clearInterval(waitForApiID);
+			}
+		}, 1000);
 	}
 	render() {
 		return (
@@ -45,14 +48,14 @@ export default class FirstLaunch1 extends Component {
 						}}>
 						Your ID
 					</Text>
-					{this.state.id !== "" ? (
+					{this.state.apiID !== "" ? (
 						<Text
 							style={{
 								color: Palette.shades.grey[0],
 								fontSize: 40,
 								marginTop: -10,
 							}}>
-							{this.state.id}Test
+							{this.state.apiID}
 						</Text>
 					) : (
 						<Animated.View
