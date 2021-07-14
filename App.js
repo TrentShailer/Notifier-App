@@ -11,6 +11,7 @@ import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Home from "./Views/Home";
 
 const MainStack = createStackNavigator();
 const RootStack = createStackNavigator();
@@ -30,6 +31,7 @@ class MainStackScreen extends Component {
 		this.state = {
 			NetInfoListener: () => {},
 			apiID: "",
+			firstLaunch: false,
 		};
 	}
 	registerForPushNotificationsAsync = async () => {
@@ -76,7 +78,13 @@ class MainStackScreen extends Component {
 		}
 	};
 
-	componentDidMount() {
+	async componentDidMount() {
+		var firstLaunch = await AsyncStorage.getItem("firstLaunch");
+		firstLaunch = null;
+		if (firstLaunch === null) {
+			await AsyncStorage.setItem("firstLaunch", "false");
+			navigationRef.current?.navigate("FirstLaunch1");
+		}
 		const netInfoListener = NetInfo.addEventListener(
 			async (networkState) => {
 				if (!networkState.isConnected) {
@@ -104,7 +112,7 @@ class MainStackScreen extends Component {
 	render() {
 		return (
 			<MainStack.Navigator
-				initialRouteName="FirstLaunch1"
+				initialRouteName="Home"
 				screenOptions={{
 					headerStyle: {
 						backgroundColor: Palette.shades.grey[8],
@@ -114,21 +122,28 @@ class MainStackScreen extends Component {
 				<MainStack.Screen
 					name="FirstLaunch1"
 					component={FirstLaunch1}
-					options={{ title: "Welcome" }}
+					options={{ title: "Welcome", headerLeft: null }}
 				/>
 				<MainStack.Screen
 					name="FirstLaunch2"
 					component={FirstLaunch2}
 					options={{ title: "Welcome" }}
 				/>
+				<MainStack.Screen
+					name="Home"
+					component={Home}
+					options={{ title: "Messages", headerLeft: null }}
+				/>
 			</MainStack.Navigator>
 		);
 	}
 }
 
+const navigationRef = React.createRef();
+
 export default function App() {
 	return (
-		<NavigationContainer>
+		<NavigationContainer ref={navigationRef}>
 			<RootStack.Navigator mode="modal">
 				<RootStack.Screen
 					name="Main"
