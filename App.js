@@ -1,5 +1,6 @@
 import "react-native-gesture-handler";
 import React, { Component, useRef } from "react";
+import { View } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import Palette from "./Utilities/Palette";
 import FirstLaunch1 from "./Views/FirstLaunch1";
@@ -12,6 +13,7 @@ import * as Notifications from "expo-notifications";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Home from "./Views/Home";
+import EditSender from "./Views/EditSender";
 
 const MainStack = createStackNavigator();
 const RootStack = createStackNavigator();
@@ -58,11 +60,11 @@ class MainStackScreen extends Component {
 					try {
 						await AsyncStorage.setItem("apiID", res.data.apiID);
 					} catch (err) {
-						console.log(err);
+						alert("Failed to save id.");
 					}
 				})
 				.catch((err) => {
-					console.log(err);
+					alert("Failed to create user.");
 				});
 		} else {
 			alert("Must use physical device for Push Notifications");
@@ -98,7 +100,7 @@ class MainStackScreen extends Component {
 						}
 						this.setState({ apiID: apiID });
 					} catch (err) {
-						console.log(err);
+						alert("Failed to fetch id.");
 					}
 				}
 			}
@@ -130,6 +132,11 @@ class MainStackScreen extends Component {
 					options={{ title: "Welcome" }}
 				/>
 				<MainStack.Screen
+					name="EditSender"
+					component={EditSender}
+					options={{ title: "Edit Sender" }}
+				/>
+				<MainStack.Screen
 					name="Home"
 					component={Home}
 					options={{ title: "Messages", headerLeft: null }}
@@ -139,7 +146,7 @@ class MainStackScreen extends Component {
 	}
 }
 
-const navigationRef = React.createRef();
+export const navigationRef = React.createRef();
 
 export default function App() {
 	return (
