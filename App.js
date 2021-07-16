@@ -1,21 +1,27 @@
 import "react-native-gesture-handler";
-import React, { Component, useRef } from "react";
-import { View } from "react-native";
-import NetInfo from "@react-native-community/netinfo";
+import React, { useEffect } from "react";
 import Palette from "./Utilities/Palette";
 import FirstLaunch1 from "./Views/FirstLaunch1";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import FirstLaunch2 from "./Views/FirstLaunch2";
-import NoInternetModal from "./Views/NoInternetModal";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Home from "./Views/Home";
 import EditSender from "./Views/EditSender";
+import { navigationRef } from "./Utilities/Store";
+import { Provider } from "react-redux";
+import Loading from "./Views/Loading";
+
+import store from "./Utilities/Store";
+
+import { useDispatch } from "react-redux";
+import { assignApiID, assignSenders } from "./Utilities/Slices";
 
 const MainStack = createStackNavigator();
+const FirstStack = createStackNavigator();
 const RootStack = createStackNavigator();
 
 Notifications.setNotificationHandler({
@@ -26,143 +32,166 @@ Notifications.setNotificationHandler({
 	}),
 });
 
-class MainStackScreen extends Component {
-	constructor(props) {
-		super(props);
-
-		this.state = {
-			NetInfoListener: () => {},
-			apiID: "",
-			firstLaunch: false,
-		};
-	}
-	registerForPushNotificationsAsync = async () => {
-		if (Constants.isDevice) {
-			const { status: existingStatus } =
-				await Notifications.getPermissionsAsync();
-			let finalStatus = existingStatus;
-			if (existingStatus !== "granted") {
-				const { status } =
-					await Notifications.requestPermissionsAsync();
-				finalStatus = status;
-			}
-			if (finalStatus !== "granted") {
-				alert("Failed to get push token for push notification!");
-				return;
-			}
-			const token = (await Notifications.getExpoPushTokenAsync()).data;
-			axios
-				.post("http://192.168.9.101:3005/user/create", {
-					pushToken: token,
-				})
-				.then(async (res) => {
-					this.setState({ apiID: res.data.apiID });
-					try {
-						await AsyncStorage.setItem("apiID", res.data.apiID);
-					} catch (err) {
-						alert("Failed to save id.");
-					}
-				})
-				.catch((err) => {
-					alert("Failed to create user.");
-				});
-		} else {
-			alert("Must use physical device for Push Notifications");
+async function registerForPushNotifications(apiID) {
+	if (Constants.isDevice) {
+		const { status: existingStatus } =
+			await Notifications.getPermissionsAsync();
+		let finalStatus = existingStatus;
+		if (existingStatus !== "granted") {
+			const { status } = await Notifications.requestPermissionsAsync();
+			finalStatus = status;
 		}
-
-		if (Platform.OS === "android") {
-			Notifications.setNotificationChannelAsync("default", {
-				name: "default",
-				importance: Notifications.AndroidImportance.MAX,
-				vibrationPattern: [0, 250, 250, 250],
-				lightColor: "#FF231F7C",
+		if (finalStatus !== "granted") {
+			return;
+		}
+		const token = (await Notifications.getExpoPushTokenAsync()).data;
+		axios
+			.post("http://192.168.9.101:3005/user/registerPushToken", {
+				pushToken: token,
+				apiID: apiID,
+			})
+			.then(async (res) => {
+				if (res.data.error) alert(res.data.error);
+			})
+			.catch((err) => {
+				console.log(err);
+				alert("Failed to register push token.");
 			});
-		}
-	};
-
-	async componentDidMount() {
-		var firstLaunch = await AsyncStorage.getItem("firstLaunch");
-		firstLaunch = null;
-		if (firstLaunch === null) {
-			await AsyncStorage.setItem("firstLaunch", "false");
-			navigationRef.current?.navigate("FirstLaunch1");
-		}
-		const netInfoListener = NetInfo.addEventListener(
-			async (networkState) => {
-				if (!networkState.isConnected) {
-					this.props.navigation.navigate("NoInternet");
-				} else {
-					this.props.navigation.navigate("Main");
-					try {
-						var apiID = await AsyncStorage.getItem("apiID");
-						if (apiID === null) {
-							return this.registerForPushNotificationsAsync();
-						}
-						this.setState({ apiID: apiID });
-					} catch (err) {
-						alert("Failed to fetch id.");
-					}
-				}
-			}
-		);
-
-		this.setState({ NetInfoListener: netInfoListener });
+	} else {
+		alert("Must use physical device for Push Notifications");
 	}
-	componentWillUnmount() {
-		this.state.NetInfoListener();
-	}
-	render() {
-		return (
-			<MainStack.Navigator
-				initialRouteName="Home"
-				screenOptions={{
-					headerStyle: {
-						backgroundColor: Palette.shades.grey[8],
-					},
-					headerTintColor: Palette.shades.grey[0],
-				}}>
-				<MainStack.Screen
-					name="FirstLaunch1"
-					component={FirstLaunch1}
-					options={{ title: "Welcome", headerLeft: null }}
-				/>
-				<MainStack.Screen
-					name="FirstLaunch2"
-					component={FirstLaunch2}
-					options={{ title: "Welcome" }}
-				/>
-				<MainStack.Screen
-					name="EditSender"
-					component={EditSender}
-					options={{ title: "Edit Sender" }}
-				/>
-				<MainStack.Screen
-					name="Home"
-					component={Home}
-					options={{ title: "Messages", headerLeft: null }}
-				/>
-			</MainStack.Navigator>
-		);
+
+	if (Platform.OS === "android") {
+		Notifications.setNotificationChannelAsync("default", {
+			name: "default",
+			importance: Notifications.AndroidImportance.MAX,
+			vibrationPattern: [0, 250, 250, 250],
+			lightColor: "#FF231F7C",
+		});
 	}
 }
 
-export const navigationRef = React.createRef();
+function FirstLaunchStack(props) {
+	useEffect(() => {
+		return () => {};
+	});
+	return (
+		<FirstStack.Navigator
+			initialRouteName="FirstLaunch1"
+			screenOptions={{
+				headerStyle: {
+					backgroundColor: Palette.shades.grey[8],
+				},
+				headerTintColor: Palette.shades.grey[0],
+			}}>
+			<FirstStack.Screen
+				name="FirstLaunch1"
+				component={FirstLaunch1}
+				options={{ title: "Welcome", headerLeft: null }}
+			/>
+			<FirstStack.Screen
+				name="FirstLaunch2"
+				component={FirstLaunch2}
+				options={{ title: "Welcome" }}
+			/>
+			<FirstStack.Screen
+				name="EditSender"
+				component={EditSender}
+				options={{ title: "Edit Sender" }}
+			/>
+		</FirstStack.Navigator>
+	);
+}
 
-export default function App() {
+function MainStackComponent(props) {
+	return (
+		<MainStack.Navigator
+			initialRouteName="Home"
+			screenOptions={{
+				headerStyle: {
+					backgroundColor: Palette.shades.grey[8],
+				},
+				headerTintColor: Palette.shades.grey[0],
+			}}>
+			<MainStack.Screen
+				name="EditSender"
+				component={EditSender}
+				options={{ title: "Edit Sender" }}
+			/>
+			<MainStack.Screen
+				name="Home"
+				component={Home}
+				options={{ title: "Messages", headerLeft: null }}
+			/>
+		</MainStack.Navigator>
+	);
+}
+
+function InnerApp() {
+	const dispatch = useDispatch();
+	useEffect(() => {
+		async function GetFirstLaunch() {
+			var apiID = await AsyncStorage.getItem("apiID");
+			if (apiID === null) {
+				axios
+					.post("http://192.168.9.101:3005/user/create")
+					.then((res) => {
+						if (res.data.error) return alert(res.data.error);
+						var apiID = res.data.apiID;
+						dispatch(assignApiID(apiID));
+						AsyncStorage.setItem("apiID", apiID);
+						registerForPushNotifications(apiID);
+						navigationRef.current?.navigate("FirstLaunch");
+					})
+					.catch((err) => {
+						alert("Failed to create user");
+					});
+			} else {
+				dispatch(assignApiID(apiID));
+				axios
+					.post("http://192.168.9.101:3005/sender/get/all", {
+						apiID: apiID,
+					})
+					.then((res) => {
+						if (res.data.error) return alert(res.data.error);
+						dispatch(assignSenders(res.data.senders));
+						//navigationRef.current?.navigate("Main");
+						navigationRef.current?.navigate("FirstLaunch");
+					})
+					.catch((err) => {
+						alert("Failed to fetch senders.");
+					});
+			}
+		}
+		GetFirstLaunch();
+	});
 	return (
 		<NavigationContainer ref={navigationRef}>
-			<RootStack.Navigator mode="modal">
+			<RootStack.Navigator initialRouteName="Loading" mode="modal">
 				<RootStack.Screen
 					name="Main"
-					component={MainStackScreen}
+					component={MainStackComponent}
 					options={{ headerShown: false }}
 				/>
 				<RootStack.Screen
-					name="NoInternet"
-					component={NoInternetModal}
+					name="FirstLaunch"
+					component={FirstLaunchStack}
+					options={{ headerShown: false }}
+				/>
+				<RootStack.Screen
+					name="Loading"
+					component={Loading}
 					options={{ headerShown: false }}
 				/>
 			</RootStack.Navigator>
 		</NavigationContainer>
+	);
+}
+
+export default function App() {
+	return (
+		<Provider store={store}>
+			<InnerApp />
+		</Provider>
 	);
 }
