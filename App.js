@@ -155,8 +155,7 @@ function InnerApp() {
 					.then((res) => {
 						if (res.data.error) return alert(res.data.error);
 						dispatch(assignSenders(res.data.senders));
-						//navigationRef.current?.navigate("Main");
-						navigationRef.current?.navigate("FirstLaunch");
+						navigationRef.current?.navigate("Main");
 					})
 					.catch((err) => {
 						alert("Failed to fetch senders.");

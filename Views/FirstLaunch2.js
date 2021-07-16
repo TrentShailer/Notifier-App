@@ -194,7 +194,7 @@ export default function FirstLunch2(props) {
 			{showNameBox ? null : (
 				<View style={{ width: "100%" }}>
 					<CustomButton
-						onPress={() => props.navigation.navigate("Home")}
+						onPress={() => props.navigation.navigate("Main")}
 						color={Palette.shades.green[5]}
 						text={"Finish"}
 					/>

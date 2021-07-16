@@ -10,8 +10,6 @@ import {
 import Palette from "../Utilities/Palette";
 import axios from "axios";
 import Svg, { Path } from "react-native-svg";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { navigationRef } from "../Utilities/Store";
 import { useDispatch, useSelector } from "react-redux";
 import { assignSenders } from "../Utilities/Slices";
 
@@ -144,7 +142,29 @@ export default function EditSender(props) {
 					Notifications
 				</Text>
 				<View>
-					<TouchableOpacity>
+					<TouchableOpacity
+						onPress={() => {
+							axios
+								.post(
+									"http://192.168.9.101:3005/sender/edit/mute",
+									{
+										senderApiID: sender.apiID,
+										apiID: apiID,
+										mute: !sender.muted,
+									}
+								)
+								.then((res) => {
+									if (res.data.error)
+										return alert(res.data.error);
+									dispatch(assignSenders(res.data.senders));
+									var newSender = { ...sender };
+									newSender.muted = !sender.muted;
+									setSender(newSender);
+								})
+								.catch((error) => {
+									alert("Failed to edit sender.");
+								});
+						}}>
 						<Text
 							style={{
 								color: Palette.shades.grey[0],
@@ -157,26 +177,7 @@ export default function EditSender(props) {
 								color: Palette.shades.green[5],
 								fontSize: 15,
 							}}>
-							No
-						</Text>
-					</TouchableOpacity>
-				</View>
-				<View style={{ marginTop: 25 }}>
-					<TouchableOpacity>
-						<Text
-							style={{
-								color: Palette.shades.grey[0],
-								fontSize: 20,
-							}}>
-							Notify if no message received in
-						</Text>
-
-						<Text
-							style={{
-								color: Palette.shades.green[5],
-								fontSize: 15,
-							}}>
-							Disabled
+							{sender.muted ? "Yes" : "No"}
 						</Text>
 					</TouchableOpacity>
 				</View>
