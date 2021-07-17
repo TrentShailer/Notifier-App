@@ -22,6 +22,7 @@ import { useDispatch } from "react-redux";
 import { assignApiID, assignSenders } from "./Utilities/Slices";
 import { TouchableOpacity } from "react-native";
 import Svg, { Path } from "react-native-svg";
+import Sender from "./Views/Sender";
 
 const MainStack = createStackNavigator();
 const FirstStack = createStackNavigator();
@@ -136,6 +137,11 @@ function MainStackComponent(props) {
 				options={{
 					title: "Edit Sender",
 				}}
+			/>
+			<MainStack.Screen
+				name="sender"
+				component={Sender}
+				options={({ route }) => ({ title: route.params.name })}
 			/>
 			<MainStack.Screen
 				name="Profile"

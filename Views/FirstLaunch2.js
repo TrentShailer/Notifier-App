@@ -58,14 +58,6 @@ export default function FirstLunch2(props) {
 						Senders are used to separate messages from different
 						sources.
 					</Text>
-					<Text
-						style={{
-							color: Palette.shades.grey[0],
-							textAlign: "center",
-						}}>
-						You may view up to the last 50 messages from each
-						sender.
-					</Text>
 				</View>
 				<TouchableOpacity
 					style={{
