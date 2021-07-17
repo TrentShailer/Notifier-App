@@ -5,6 +5,7 @@ import FirstLaunch1 from "./Views/FirstLaunch1";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import FirstLaunch2 from "./Views/FirstLaunch2";
+import Profile from "./Views/Profile";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import axios from "axios";
@@ -19,6 +20,8 @@ import store from "./Utilities/Store";
 
 import { useDispatch } from "react-redux";
 import { assignApiID, assignSenders } from "./Utilities/Slices";
+import { TouchableOpacity } from "react-native";
+import Svg, { Path } from "react-native-svg";
 
 const MainStack = createStackNavigator();
 const FirstStack = createStackNavigator();
@@ -104,6 +107,20 @@ function FirstLaunchStack(props) {
 }
 
 function MainStackComponent(props) {
+	const headerRight = (
+		<TouchableOpacity
+			style={{ marginRight: 15 }}
+			onPress={() => {
+				props.navigation.navigate("Profile");
+			}}>
+			<Svg width="36" height="36" viewBox="0 0 24 24">
+				<Path
+					fill={Palette.shades.green[5]}
+					d="M12,19.2C9.5,19.2 7.29,17.92 6,16C6.03,14 10,12.9 12,12.9C14,12.9 17.97,14 18,16C16.71,17.92 14.5,19.2 12,19.2M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,6.47 17.5,2 12,2Z"
+				/>
+			</Svg>
+		</TouchableOpacity>
+	);
 	return (
 		<MainStack.Navigator
 			initialRouteName="Home"
@@ -116,12 +133,25 @@ function MainStackComponent(props) {
 			<MainStack.Screen
 				name="EditSender"
 				component={EditSender}
-				options={{ title: "Edit Sender" }}
+				options={{
+					title: "Edit Sender",
+				}}
+			/>
+			<MainStack.Screen
+				name="Profile"
+				component={Profile}
+				options={{
+					title: "Profile",
+				}}
 			/>
 			<MainStack.Screen
 				name="Home"
 				component={Home}
-				options={{ title: "Messages", headerLeft: null }}
+				options={{
+					title: "Messages",
+					headerLeft: null,
+					headerRight: () => headerRight,
+				}}
 			/>
 		</MainStack.Navigator>
 	);

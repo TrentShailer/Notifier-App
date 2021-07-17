@@ -4,11 +4,12 @@ import Palette from "../Utilities/Palette";
 
 export default function Home() {
 	return (
-		<View>
+		<View style={styles.mainView}>
 			<Text> textInComponent </Text>
 		</View>
 	);
 }
+
 const styles = StyleSheet.create({
 	mainView: {
 		backgroundColor: Palette.shades.grey[9],
