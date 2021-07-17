@@ -27,6 +27,7 @@ import axios from "axios";
 export default function Home(props) {
 	const dispatch = useDispatch();
 	const apiID = useSelector((state) => state.apiID);
+	const storedSenders = useSelector((state) => state.senders);
 	const [senders, setSenders] = useState([]);
 	useEffect(() => {
 		axios
@@ -40,7 +41,7 @@ export default function Home(props) {
 			.catch((error) => {
 				alert("Failed to get senders");
 			});
-	});
+	}, [storedSenders]);
 	return (
 		<View style={styles.mainView}>
 			<View style={{ marginLeft: 20, marginTop: 30 }}>
