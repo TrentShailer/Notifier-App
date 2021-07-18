@@ -28,6 +28,7 @@ export default function Home(props) {
 	const dispatch = useDispatch();
 	const apiID = useSelector((state) => state.apiID);
 	const storedSenders = useSelector((state) => state.senders);
+	const [update, setUpdate] = useState(false);
 	const [senders, setSenders] = useState([]);
 	useEffect(() => {
 		axios
@@ -41,7 +42,7 @@ export default function Home(props) {
 			.catch((error) => {
 				alert("Failed to get senders");
 			});
-	}, [storedSenders]);
+	}, [storedSenders, update]);
 	return (
 		<View style={styles.mainView}>
 			<View style={{ marginLeft: 20, marginTop: 30 }}>
@@ -52,6 +53,7 @@ export default function Home(props) {
 							latestMessage={sender.message}
 							apiID={apiID}
 							data={sender}
+							update={() => setUpdate(!update)}
 						/>
 					);
 				})}
@@ -76,6 +78,7 @@ function Sender(props) {
 	return (
 		<TouchableOpacity
 			onPress={() => {
+				props.update();
 				navigationRef.current?.navigate("sender", {
 					senderApiID: props.data.apiID,
 					name: props.data.name,
