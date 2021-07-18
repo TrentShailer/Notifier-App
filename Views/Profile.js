@@ -127,7 +127,7 @@ export default function Profile() {
 									setPageLoading(true);
 									axios
 										.post(
-											"http://192.168.9.101:3005/sender/create",
+											"http://notification.trentshailer.com/sender/create",
 											{
 												name: currentSenderName,
 												apiID: apiID,

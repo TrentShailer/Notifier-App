@@ -50,10 +50,13 @@ async function registerForPushNotifications(apiID) {
 		}
 		const token = (await Notifications.getExpoPushTokenAsync()).data;
 		axios
-			.post("http://192.168.9.101:3005/user/registerPushToken", {
-				pushToken: token,
-				apiID: apiID,
-			})
+			.post(
+				"http://notification.trentshailer.com/user/registerPushToken",
+				{
+					pushToken: token,
+					apiID: apiID,
+				}
+			)
 			.then(async (res) => {
 				if (res.data.error) alert(res.data.error);
 			})
@@ -170,7 +173,7 @@ function InnerApp() {
 			var apiID = await AsyncStorage.getItem("apiID");
 			if (apiID === null) {
 				axios
-					.post("http://192.168.9.101:3005/user/create")
+					.post("http://notification.trentshailer.com/user/create")
 					.then((res) => {
 						if (res.data.error) return alert(res.data.error);
 						var apiID = res.data.apiID;
@@ -183,18 +186,52 @@ function InnerApp() {
 						alert("Failed to create user");
 					});
 			} else {
-				dispatch(assignApiID(apiID));
 				axios
-					.post("http://192.168.9.101:3005/sender/get/all", {
+					.post("http://notification.trentshailer.com/user/verify", {
 						apiID: apiID,
 					})
 					.then((res) => {
-						if (res.data.error) return alert(res.data.error);
-						dispatch(assignSenders(res.data.senders));
-						navigationRef.current?.navigate("Main");
+						if (res.data.error) {
+							axios
+								.post(
+									"http://notification.trentshailer.com/user/create"
+								)
+								.then((res) => {
+									if (res.data.error)
+										return alert(res.data.error);
+									var apiID = res.data.apiID;
+									dispatch(assignApiID(apiID));
+									AsyncStorage.setItem("apiID", apiID);
+									registerForPushNotifications(apiID);
+									navigationRef.current?.navigate(
+										"FirstLaunch"
+									);
+								})
+								.catch((err) => {
+									alert("Failed to create user");
+								});
+						} else {
+							dispatch(assignApiID(apiID));
+							axios
+								.post(
+									"http://notification.trentshailer.com/sender/get/all",
+									{
+										apiID: apiID,
+									}
+								)
+								.then((res) => {
+									if (res.data.error)
+										return alert(res.data.error);
+									dispatch(assignSenders(res.data.senders));
+									navigationRef.current?.navigate("Main");
+								})
+								.catch((err) => {
+									alert("Failed to fetch senders.");
+								});
+						}
 					})
-					.catch((err) => {
-						alert("Failed to fetch senders.");
+					.catch((error) => {
+						alert("Failed to get account");
 					});
 			}
 		}

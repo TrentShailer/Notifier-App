@@ -37,10 +37,13 @@ export default function Sender(props) {
 	const [scrollRef, setScrollRef] = useState();
 	useEffect(() => {
 		axios
-			.post("http://192.168.9.101:3005/sender/get/messages/sender", {
-				apiID: apiID,
-				senderApiID: senderApiID,
-			})
+			.post(
+				"http://notification.trentshailer.com/sender/get/messages/sender",
+				{
+					apiID: apiID,
+					senderApiID: senderApiID,
+				}
+			)
 			.then((res) => {
 				if (res.data.error) return alert(res.data.error);
 				setMessages(res.data.messages);

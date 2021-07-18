@@ -32,16 +32,21 @@ export default function Home(props) {
 	const [senders, setSenders] = useState([]);
 	useEffect(() => {
 		axios
-			.post("http://192.168.9.101:3005/sender/get/homepage", {
+			.post("http://notification.trentshailer.com/sender/get/homepage", {
 				apiID: apiID,
 			})
 			.then((res) => {
-				if (res.data.error) return alert(res.data.error);
+				if (res.data.error) return;
 				setSenders(res.data.senders);
 			})
-			.catch((error) => {
-				alert("Failed to get senders");
-			});
+			.catch((error) => {});
+		var updateTimer = setInterval(() => {
+			setUpdate(!update);
+		}, 5000);
+
+		return () => {
+			clearInterval(updateTimer);
+		};
 	}, [storedSenders, update]);
 	return (
 		<View style={styles.mainView}>

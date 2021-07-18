@@ -59,7 +59,7 @@ export default function EditSender(props) {
 									setEditingName(false);
 									axios
 										.post(
-											"http://192.168.9.101:3005/sender/edit/rename",
+											"http://notification.trentshailer.com/sender/edit/rename",
 											{
 												name: senderName,
 												senderApiID: sender.apiID,
@@ -146,7 +146,7 @@ export default function EditSender(props) {
 						onPress={() => {
 							axios
 								.post(
-									"http://192.168.9.101:3005/sender/edit/mute",
+									"http://notification.trentshailer.com/sender/edit/mute",
 									{
 										senderApiID: sender.apiID,
 										apiID: apiID,
@@ -202,7 +202,7 @@ export default function EditSender(props) {
 							onPress: () => {
 								axios
 									.post(
-										"http://192.168.9.101:3005/sender/delete",
+										"http://notification.trentshailer.com/sender/delete",
 										{
 											senderApiID: sender.apiID,
 											apiID: apiID,
